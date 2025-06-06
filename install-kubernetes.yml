@@ -1,0 +1,148 @@
+---
+- hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+
+  tasks:
+    - ansible.builtin.debug:
+        msg:
+          - 'Ensure the required pre-requisites are in place:'
+          - '   - Linux-Ubuntu/RHEL'
+          - '   - 2 CPU'
+          - '   - 2GB RAM'
+          - '   - Swap disabled on all nodes'
+          - '   - ssh key-based authentication from Ansible Controller to nodes using a service account'
+          - '   - ssh key-based authentication from c1-cp1 to nodes using a service account'
+          - '   -  Ensure required Ansible collections are installed on Ansible controller node:'
+          - '         - ansible-galaxy collection install -r collection/requirements.yml'
+
+# - name: 'Beginning configuration of node c1-cp1'
+#   hosts: all
+#   become: true
+#   gather_facts: true
+
+#   vars_files:
+#     - common_vars.yml
+
+#   roles:
+#     - all-nodes
+
+
+
+# # - name: 'Beginning configuration of node c1-node1'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars:
+# #     ansible_port: '2226'
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   roles:
+# #     - all-nodes
+
+
+# # - name: 'Beginning configuration of node c1-node2'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars:
+# #     ansible_port: '2227'
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   roles:
+# #     - all-nodes
+
+
+
+# # - name: 'Beginning configuration of node c1-node3'
+# #   hosts: localhost
+# #   become: true
+# #   gather_facts: true
+
+# #   vars:
+# #     ansible_port: '2225'
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   roles:
+# #     - all-nodes
+
+
+
+
+# # - name: 'Beginning configuration of the control plane node...'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   roles:
+# #     - control-plane-node
+
+
+
+# # - name: 'Join worker node1 to the cluster'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   tasks:
+# #     - name: 'Run the join-command to join the node to the cluster'
+# #       ansible.builtin.shell:
+# #         cmd: |
+# #           set -o pipefail
+# #           {{ hostvars['localhost:2224']['_join_command'].stdout }}
+# #         executable: /bin/bash
+# #       changed_when: false
+
+
+
+# # - name: 'Join worker node2 to the cluster'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   tasks:
+# #     - name: 'Run the join-command to join the node to the cluster'
+# #       ansible.builtin.shell:
+# #         cmd: |
+# #           set -o pipefail
+# #           {{ hostvars['localhost:2224']['_join_command'].stdout }}
+# #         executable: /bin/bash
+# #       changed_when: false
+
+
+
+# # - name: 'Join worker node3 to the cluster'
+# #   hosts: 'localhost'
+# #   become: true
+# #   gather_facts: true
+
+# #   vars_files:
+# #     - common_vars.yml
+
+# #   tasks:
+# #     - name: 'Run the join-command to join the node to the cluster'
+# #       ansible.builtin.shell:
+# #         cmd: |
+# #           set -o pipefail
+# #           {{ hostvars['localhost:2224']['_join_command'].stdout }}
+# #         executable: /bin/bash
+# #       changed_when: false
+...

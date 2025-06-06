@@ -1,0 +1,42 @@
+---
+- name: 'Add kubernetes-dashboard repository'
+  ansible.builtin.shell: "helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/"
+  changed_when: false
+
+- name: 'Install Dashboard UI'
+  ansible.builtin.shell: "helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard"
+  changed_when: false
+
+- name: 'Sleep 1 minute before updating dashboard-kong-proxy'
+  ansible.builtin.pause:
+    minutes: 1
+
+- name: 'Copy over the manifest files'
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "./{{ item }}"
+    owner: "{{ svc_acct_name}}"
+    group: "{{ svc_acct_name}}"
+    mode: '0640'
+  loop:
+    - '7dashboard-kong-proxy-service.yaml'
+    - '8service-account.yaml'
+    - '9cluster-role-binding.yaml'
+
+- name: 'Apply the manifests'
+  ansible.builtin.shell: "kubectl apply -f {{ item }}"
+  changed_when: false
+  loop:
+    - '7dashboard-kong-proxy-service.yaml'
+    - '8service-account.yaml'
+    - '9cluster-role-binding.yaml'
+
+- name: 'Generate a token'
+  ansible.builtin.shell: "kubectl -n kubernetes-dashboard create token admin-user"
+  changed_when: false
+  register: _token
+
+- name: 'Copy this token to the jumpbox clipboard to login to the cluster at http://nodeip:31987'
+  ansible.builtin.debug:
+    var: _token.stdout
+...

@@ -1,0 +1,12 @@
+---
+- name: 'Beginning configuration of the control plane node...'
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - common_vars.yml
+
+  roles:
+    - control-plane-node
+...

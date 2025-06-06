@@ -1,0 +1,15 @@
+---
+svc_acct_name: ''
+kubernetes_version: '1.31.1-1.1'
+kubernetes_version_short: '1.31'
+kubernetes_version_medium: '1.31.1'
+cpn_proxy: 'localhost:2224'
+node1_proxy: 'localhost:2226'
+node2_proxy: 'localhost:2227'
+node3_proxy: 'localhost:2225'
+elastic_search_version: '8.15.0'
+elastic_search_num_nodes: '1'
+admin_passwd: ""
+resource_group: 'test'
+#_join_command: "kubeadm join 10.0.0.5:6443 --token 7u052a.oxnwqr2jqf7z50yh --discovery-token-ca-cert-hash sha256:71944ea2c2b71dfe97f687b7bf7438eab4db4317063ed30f8e91e271d9c027e8"
+...

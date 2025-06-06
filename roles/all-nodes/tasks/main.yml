@@ -1,0 +1,138 @@
+---
+- name: 'Uncomment PasswordAuthentication line from /etc/ssh/sshd_config'
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^#\s*PasswordAuthentication.*$'
+    line: 'PasswordAuthentication yes'
+
+- name: 'Comment out KbdInteractiveAuthentication line from /etc/ssh/sshd_config'
+  ansible.builtin.lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^KbdInteractiveAuthentication.*$'
+    line: '#KbdInteractiveAuthentication no'
+
+- name: 'Create ssh keys'
+  ansible.builtin.user:
+    name: "{{ svc_acct_name }}"
+    generate_ssh_key: true
+
+- name: 'If this is the control plane node get the current public key for later use'
+  ansible.builtin.fetch:
+    src: "/home/{{ svc_acct_name }}/.ssh/id_rsa.pub"
+    dest: './id_rsa.pub'
+    flat: true
+  when: "ansible_hostname | regex_search('^test-c1-cp.*$')"
+
+- name: 'If a worker node add the control plane node to authorized keys'
+  ansible.builtin.copy:
+    dest: "/home/{{ svc_acct_name }}/.ssh/authorized_keys"
+    content: "{{ lookup('file', './id_rsa.pub') }}"
+    owner: "{{ svc_acct_name }}"
+    group: "{{ svc_acct_name }}"
+    mode: 0600
+  when: "ansible_hostname | regex_search('^test-c1-node.*$')"
+
+- name: 'Copy over k8s.conf file to /etc/modules-load.d/k8s.conf'
+  ansible.builtin.copy:
+    src: k8s.conf
+    dest: '/etc/modules-load.d/k8s.conf'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: 'Install the overlay and br_netfilter modules'
+  community.general.modprobe:
+    name: "{{ item }}"
+  loop:
+    - 'overlay'
+    - 'br_netfilter'
+
+- name: 'Set sysctl parameters'
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop:
+    - { name: net.bridge.bridge-nf-call-iptables, value: 1 }
+    - { name: net.bridge.bridge-nf-call-ip6tables, value: 1 }
+    - { name: net.ipv4.ip_forward, value: 1 }
+
+- name: 'Install containerd'
+  ansible.builtin.apt:
+    name: 'containerd'
+    state: present
+
+- name: 'Make /etc/containerd directory'
+  ansible.builtin.file:
+    path: '/etc/containerd'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: 'Create a containerd configuration file'
+  ansible.builtin.shell: "containerd config default | tee /etc/containerd/config.toml"
+  changed_when: false
+
+- name: 'Set the cgroup driver for containerd to systemd which is required for the kubelet'
+  ansible.builtin.shell: "sed -i 's/            SystemdCgroup = false/            SystemdCgroup = true/' /etc/containerd/config.toml"
+  changed_when: false
+
+- name: 'Restart containerd'
+  ansible.builtin.service:
+    name: containerd
+    state: restarted
+
+- name: 'Install packages apt-transport-https, ca-certificates, curl, gpg'
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gpg
+    state: latest
+
+- name: 'Add k8s io apt repository gpg key this will likely change for each version of kubernetes release'
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      sudo curl -fsSL https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version_short }}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    executable: /bin/bash
+  args:
+    creates: '/etc/apt/keyrings/kubernetes-apt-keyring.gpg'
+  changed_when: false
+
+- name: 'Add the Kubernetes apt repository'
+  ansible.builtin.shell: 
+    cmd: |
+      set -o pipefail
+      echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version_short }}/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+    executable: /bin/bash
+  args:
+    creates: '/etc/apt/sources.list.d/kubernetes.list'
+  changed_when: false
+
+- name: 'Update the apt cache'
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: 'Install kubelet kubeadm and kubectl'
+  ansible.builtin.apt:
+    name:
+      - kubelet={{ kubernetes_version }}
+      - kubeadm={{ kubernetes_version }}
+      - kubectl={{ kubernetes_version }}
+    state: present
+
+- name: 'Mark packages hold so they are not updated'
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      apt-mark hold kubelet kubeadm kubectl containerd
+    executable: /bin/bash
+  changed_when: false
+
+- name: 'Restart sshd'
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+...

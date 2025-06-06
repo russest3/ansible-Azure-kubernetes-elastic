@@ -1,0 +1,18 @@
+---
+- name: 'Join worker node to the cluster'
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars_files:
+    - common_vars.yml
+
+  tasks:
+    - name: 'Run the join-command to join the node to the cluster'
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          kubeadm join 10.0.0.5:6443 --token {{ token }} --discovery-token-ca-cert-hash {{ sha256hash }}
+        executable: /bin/bash
+      changed_when: false
+...

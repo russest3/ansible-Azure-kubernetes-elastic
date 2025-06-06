@@ -1,0 +1,347 @@
+---
+- name: 'Beginning Terraform - Kubernetes - ElasticSearch Automation'
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  become: false
+
+  vars_prompt:
+    - name: admin_name
+      prompt: 'Enter name for service account'
+      private: false
+    - name: admin_pw
+      prompt: 'Enter password for service account'
+      private: false
+
+  vars_files:
+    - common_vars.yml
+
+  pre_tasks:
+    - debug:
+        msg:
+          - Ensure you are running ansible>=2.15.0 !
+          - Ensure you have exported the Azure Environment Variables (ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_SUBSCRIPTION_ID, ARM_TENANT_ID) !
+          - Ensure you have logged in to Azure using az login --use-device-code !
+
+  tasks:
+    - name: 'Ensuring environment variables are set (ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_SUBSCRIPTION_ID, ARM_TENANT_ID)'
+      ansible.builtin.set_fact:
+        _dep_check_results: "{{ _dep_check_results | default([]) + [ item | string ] }}"
+      loop:
+        - "{{ true if lookup('ansible.builtin.env', 'ARM_CLIENT_ID') is defined else false }}"
+        - "{{ true if lookup('ansible.builtin.env', 'ARM_CLIENT_SECRET') is defined else false }}"
+        - "{{ true if lookup('ansible.builtin.env', 'ARM_SUBSCRIPTION_ID') is defined else false }}"
+        - "{{ true if lookup('ansible.builtin.env', 'ARM_TENANT_ID') is defined else false }}"
+      failed_when: "'false' in _dep_check_results"
+
+    - name: 'Run terraform init'
+      ansible.builtin.shell: "terraform init"
+      changed_when: false
+      register: _init_results
+      failed_when: "_init_results.rc > 0"
+
+    - name: 'Run terraform validate'
+      ansible.builtin.shell: "terraform validate"
+      changed_when: false
+      register: _validate_results
+      failed_when: "_validate_results.rc > 0"
+
+    - name: 'Run terraform plan'
+      ansible.builtin.shell: "terraform plan -out=tfplan.out -var=admin_pw='{{ admin_pw }}' -var=admin_name='{{ admin_name }}'"
+      changed_when: false
+      register: _plan_results
+      failed_when: "_plan_results.rc > 0"
+
+    - name: 'Plan results:'
+      ansible.builtin.debug:
+        var: _plan_results.stdout
+
+    - name: 'Run terraform apply'
+      ansible.builtin.shell: "terraform apply -auto-approve 'tfplan.out'"
+      changed_when: false
+      register: _apply_results
+      failed_when: "_apply_results.rc > 0"
+
+    - name: 'Apply results:'
+      ansible.builtin.debug:
+        var: _plan_results.stdout
+
+    - name: 'Wait for bastion host creation to complete'
+      azure.azcollection.azure_rm_resource_info:
+        api_version: '2024-03-01'
+        resource_group: "{{ resource_group }}"
+        provider: 'network'
+        resource_type: 'bastionHosts'
+        resource_name: 'test-bh'
+      register: _bh_status
+      until: "_bh_status | json_query(_query) == 'Succeeded'"
+      retries: 20
+      delay: 30
+      vars:
+        _query: "response[].properties.provisioningState | [0]"
+
+    - debug:
+        var: _bh_status
+
+    - name: 'Get info for test-c1-cp1-nic1'
+      azure.azcollection.azure_rm_resource_info:
+        api_version: '2024-03-01'
+        resource_group: "{{ resource_group }}"
+        provider: 'network'
+        resource_type: 'networkInterfaces'
+        resource_name: 'test-c1-cp1-nic1'
+      register: _netint_c1_cp1_nic1
+
+    - debug:
+        var: _netint_c1_cp1_nic1
+
+    - name: 'Get IP address for test-c1-cp1'
+      ansible.builtin.set_fact:
+        _test_c1_cp1_nic1_ip: "{{ _netint_c1_cp1_nic1 | json_query(_query) }}"
+      vars:
+        _query: "response[].properties.ipConfigurations[].properties.privateIPAddress | [0]"
+
+    - debug:
+        var: _test_c1_cp1_nic1_ip
+
+    - name: 'Get info for test-c1-node1-nic1'
+      azure.azcollection.azure_rm_resource_info:
+        api_version: '2024-03-01'
+        resource_group: "{{ resource_group }}"
+        provider: 'network'
+        resource_type: 'networkInterfaces'
+        resource_name: 'test-c1-node1-nic1'
+      register: _netint_c1_node1_nic1
+
+    - name: 'Get IP address for test-c1-node1-nic1'
+      ansible.builtin.set_fact:
+        _test_c1_node1_nic1_ip: "{{ _netint_c1_node1_nic1 | json_query(_query) }}"
+      vars:
+        _query: "response[].properties.ipConfigurations[].properties.privateIPAddress | [0]"
+
+    - debug:
+        var: _test_c1_node1_nic1_ip
+
+    - name: 'Get info for test-c1-node2-nic1'
+      azure.azcollection.azure_rm_resource_info:
+        api_version: '2024-03-01'
+        resource_group: "{{ resource_group }}"
+        provider: 'network'
+        resource_type: 'networkInterfaces'
+        resource_name: 'test-c1-node2-nic1'
+      register: _netint_c1_node2_nic1
+
+    - name: 'Get IP address for test-c1-node2-nic1'
+      ansible.builtin.set_fact:
+        _test_c1_node2_nic1_ip: "{{ _netint_c1_node2_nic1 | json_query(_query) }}"
+      vars:
+        _query: "response[].properties.ipConfigurations[].properties.privateIPAddress | [0]"
+
+    - debug:
+        var: _test_c1_node2_nic1_ip
+
+    - name: 'Get info for test-c1-node3-nic1'
+      azure.azcollection.azure_rm_resource_info:
+        api_version: '2024-03-01'
+        resource_group: "{{ resource_group }}"
+        provider: 'network'
+        resource_type: 'networkInterfaces'
+        resource_name: 'test-c1-node3-nic1'
+      register: _netint_c1_node3_nic1
+
+    - name: 'Get IP address for test-c1-node3-nic1'
+      ansible.builtin.set_fact:
+        _test_c1_node3_nic1_ip: "{{ _netint_c1_node3_nic1 | json_query(_query) }}"
+      vars:
+        _query: "response[].properties.ipConfigurations[].properties.privateIPAddress | [0]"
+
+    - debug:
+        var: _test_c1_node3_nic1_ip
+
+- name: 'Configure Tunnel'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: 'Kill Tunnel'
+      ansible.builtin.shell: "kill `ps -ef | grep 'python3.9 -sm' | head -1 | awk '{ print $2 }'`"
+      changed_when: false
+      ignore_errors: true
+
+    - name: 'Setup Tunnel'
+      ansible.builtin.shell: "az network bastion tunnel --name 'test-bh' --resource-group 'test' --target-ip-address '{{ _test_c1_cp1_nic1_ip }}' --resource-port '22' --port '{{ '222' + _test_c1_cp1_nic1_ip.split('.')[-1] }}' << 0x0A 1>/dev/null &"
+      changed_when: false
+
+    - name: 'Pause 10s'
+      ansible.builtin.pause:
+        seconds: '10'
+
+- name: 'Configure c1-cp1'
+  hosts: localhost
+  gather_facts: true
+  become: true
+  roles:
+    - all-nodes
+    - control-plane-node
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "222{{ _test_c1_cp1_nic1_ip.split('.')[-1] | string }}"
+  vars_files:
+    - common_vars.yml
+
+- name: 'Configure Tunnel'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: 'Kill Tunnel'
+      ansible.builtin.shell: "kill `ps -ef | grep 'python3.9 -sm' | head -1 | awk '{ print $2 }'`"
+      changed_when: false
+      ignore_errors: true
+
+    - name: 'Setup Tunnel'
+      ansible.builtin.shell: "az network bastion tunnel --name 'test-bh' --resource-group 'test' --target-ip-address '{{ _test_c1_node1_nic1_ip }}' --resource-port '22' --port '{{ '222' + _test_c1_node1_nic1_ip.split('.')[-1] }}' << 0x0A 1>/dev/null &"
+      changed_when: false
+
+    - name: 'Pause 10s'
+      ansible.builtin.pause:
+        seconds: '10'
+
+- name: 'Configure c1-node1'
+  hosts: 'localhost'
+  gather_facts: true
+  become: true
+  roles:
+    - all-nodes
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "222{{ _test_c1_node1_nic1_ip.split('.')[-1] | string }}"
+  vars_files:
+    - common_vars.yml
+  post_tasks:
+    - name: 'Run the join-command to join the node to the cluster'
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          {{ _join_command.stdout }}
+        executable: /bin/bash
+      changed_when: false
+
+- name: 'Configure Tunnel'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: 'Kill Tunnel'
+      ansible.builtin.shell: "kill `ps -ef | grep 'python3.9 -sm' | head -1 | awk '{ print $2 }'`"
+      changed_when: false
+      ignore_errors: true
+
+    - name: 'Setup Tunnel'
+      ansible.builtin.shell: "az network bastion tunnel --name 'test-bh' --resource-group 'test' --target-ip-address '{{ _test_c1_node2_nic1_ip }}' --resource-port '22' --port '{{ '222' + _test_c1_node2_nic1_ip.split('.')[-1] }}' << 0x0A 1>/dev/null &"
+      changed_when: false
+
+    - name: 'Pause 10s'
+      ansible.builtin.pause:
+        seconds: '10'
+
+- name: 'Configure c1-node2'
+  hosts: 'localhost'
+  gather_facts: true
+  become: true
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "222{{ _test_c1_node2_nic1_ip.split('.')[-1] | string }}"
+  vars_files:
+    - common_vars.yml
+  roles:
+    - all-nodes
+  post_tasks:
+    - name: 'Run the join-command to join the node to the cluster'
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          {{ _join_command.stdout }}
+        executable: /bin/bash
+      changed_when: false
+
+- name: 'Configure Tunnels'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: 'Kill Tunnel'
+      ansible.builtin.shell: "kill `ps -ef | grep 'python3.9 -sm' | head -1 | awk '{ print $2 }'`"
+      changed_when: false
+      ignore_errors: true
+
+    - name: 'Setup Tunnel'
+      ansible.builtin.shell: "az network bastion tunnel --name 'test-bh' --resource-group 'test' --target-ip-address '{{ _test_c1_node3_nic1_ip }}' --resource-port '22' --port '{{ '222' + _test_c1_node3_nic1_ip.split('.')[-1] }}' << 0x0A 1>/dev/null &"
+      changed_when: false
+
+    - name: 'Pause 10s'
+      ansible.builtin.pause:
+        seconds: '10'
+
+- name: 'Configure c1-node3'
+  hosts: 'localhost'
+  gather_facts: true
+  become: true
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "222{{ _test_c1_node3_nic1_ip.split('.')[-1] | string }}"
+  vars_files:
+    - common_vars.yml
+  roles:
+    - all-nodes
+  post_tasks:
+    - name: 'Run the join-command to join the node to the cluster'
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          {{ _join_command.stdout }}
+        executable: /bin/bash
+      changed_when: false
+
+    - name: 'Sleep 2 mins let everthing calm down'
+      ansible.builtin.pause:
+        minutes: 2
+
+- name: 'Remove id_rsa.pub and Configure Tunnel'
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: 'Remove id_rsa.pub'
+      ansible.builtin.file:
+        path: ./id_rsa.pub
+        state: absent
+
+    - name: 'Kill Tunnel'
+      ansible.builtin.shell: "kill `ps -ef | grep 'python3.9 -sm' | head -1 | awk '{ print $2 }'`"
+      changed_when: false
+      ignore_errors: true
+
+    - name: 'Setup Tunnel'
+      ansible.builtin.shell: "az network bastion tunnel --name 'test-bh' --resource-group 'test' --target-ip-address '{{ _test_c1_cp1_nic1_ip }}' --resource-port '22' --port '{{ '222' + _test_c1_cp1_nic1_ip.split('.')[-1] }}' << 0x0A 1>/dev/null &"
+      changed_when: false
+
+    - name: 'Pause 10s'
+      ansible.builtin.pause:
+        seconds: '10'
+
+- name: 'Beginning installation of ElasticSearch and Kubernetes Dashboard'
+  hosts: 'localhost'
+  become: false
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "222{{ _test_c1_cp1_nic1_ip.split('.')[-1] | string }}"
+  vars_files:
+    - common_vars.yml
+  environment:
+    ELASTIC_PASSWORD: 'test'
+  roles:
+    - install-elastic
+    - install-dashboard
+...

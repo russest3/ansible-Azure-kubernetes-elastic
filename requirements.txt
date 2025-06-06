@@ -1,0 +1,10 @@
+ansible>=2.15.0
+azure.cli
+azure.core
+azure.identity
+azure.mgmt.automation
+azure.mgmt.datafactory
+azure.mgmt.network
+azure.mgmt.notificationhubs
+azure.storage.blob
+msgraph-sdk

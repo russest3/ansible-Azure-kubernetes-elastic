@@ -1,0 +1,16 @@
+---
+- name: 'Beginning installation of ElasticSearch'
+  hosts: localhost
+  become: false
+  gather_facts: true
+
+  vars_files:
+    - common_vars.yml
+
+  vars:
+    ansible_python_interpreter: '/usr/bin/python'
+    ansible_port: "2225"
+
+  roles:
+    - install-elastic
+...
