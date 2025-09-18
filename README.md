@@ -1270,8 +1270,27 @@ When a Container Starts
     - Starts the networking namespace
     - If the application container restarts the network will persist
 
-Container Network Interface - CNI
+## Container Network Interface - CNI
 [https://kubernetes.io/docs/concepts/cluster-administration/networking/](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
+
+- Interface between the Container Runtime Interface (CRI) and network
+- Configures network routes
+- Executes Plugins
+  - Execute Bridge Plugin
+  - Execute ipVlan Plugin
+  - Execute Static Plugin
+- Popular CNIs:  Calico, Antrea
+
+Amazon VPC CNI Plugin:
+
+- Pod IP is the same throughout the <b>entire VPC</b>, AWS services can communicate directly to the pod
+- VPC features (flow logs, etc.)
+- Supports pod security groups
+
+Amazon VPC CNI Custom Networking for Pod
+
+- If a subnet runs out of free IP addresses this allows you to simply create a new subnet and the new pods will spin up there
+- Requires you to create a secondary network interface on the EC2 instances
 
 ## Service Mesh
 - External to application container
@@ -1279,7 +1298,9 @@ Container Network Interface - CNI
 - Pods will then start communicating to each other through the Proxy containers
 - The Sidecar containers now control how they communicate
     - Example:
-      - Route 10% traffic to A, 90% to B 
+      - Route 10% traffic to A, 90% to B
+- Service mesh is divided into a Control Plane and Data Plane
+- Istio is a popular Service Mesh
 
 ### Cluster DNS
 - DNS is available as a Service in a Cluster
