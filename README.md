@@ -1292,6 +1292,16 @@ Amazon VPC CNI Custom Networking for Pod
 - If a subnet runs out of free IP addresses this allows you to simply create a new subnet and the new pods will spin up there
 - Requires you to create a secondary network interface on the EC2 instances
 
+### Network Policies
+
+- Manifest file that contains policies such as what pods can talk to which other pods
+
+### AWS Pod Security Groups
+- Similar to regular Security Groups but for pods
+- Included only when using the Amazon VPC CNI Plugin
+- Allows pods to access AWS resources
+
+
 ## Service Mesh
 - External to application container
 - Deploys another container in the same pod as a Sidecar/Proxy
@@ -1301,6 +1311,17 @@ Amazon VPC CNI Custom Networking for Pod
       - Route 10% traffic to A, 90% to B
 - Service mesh is divided into a Control Plane and Data Plane
 - Istio is a popular Service Mesh
+
+## Reducing AWS Cost
+- Rightsizing Tools:
+    - Right Size Guide
+    - Kubecost
+    - Kubernetes Resource Report
+    - Goldilocks
+
+## Admission Control
+
+- 
 
 ### Cluster DNS
 - DNS is available as a Service in a Cluster
