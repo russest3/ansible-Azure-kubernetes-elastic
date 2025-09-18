@@ -1319,9 +1319,23 @@ Amazon VPC CNI Custom Networking for Pod
     - Kubernetes Resource Report
     - Goldilocks
 
-## Admission Control
+## Admission Control - Kubernetes API Server Flow
 
-- 
+- After Kubernetes API receives a request, it then checks for authentication/authorization
+- After which it goes to a Mutating Admission where the Manifest can be modified
+    - In this phase you can add labels or
+    - Injection of a sidecar for ServiceMesh
+- Schema Validation
+- Validating Admission
+    - Namespace Quotas
+    - If a container image must be from a specific registry
+    - Is there enough replicas?
+- Manifest saved to etcd
+
+Webhooks
+
+- Http/https web server running within the cluster or external waiting for input (requires lots of coding)
+- Use <b>Centralized Policy Systems</b> instead
 
 ### Cluster DNS
 - DNS is available as a Service in a Cluster
