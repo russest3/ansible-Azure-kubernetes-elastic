@@ -1253,6 +1253,14 @@ Cluster NetworkingTopology
 - Default Pod CIDR Range 192.168.0.0/16
 - Cluster Network is used by Services
 
+### Ingress Traffic Mode
+- ALB routes to NodePort on Node then to pods using http path parameter
+
+### Ingress Traffic IP Mode
+- ALB routes to pods directly
+- Requires seconday IP on ENI as pod IP for networking plugin (AWS CNI plugin)
+- ALB ingress controller specific feature
+
 Pod Networking Topology
 - Pod to Pod within a host is over localhost
 - Pod to Pod on another node will use real IP address of Pod
@@ -1264,6 +1272,14 @@ When a Container Starts
 
 Container Network Interface - CNI
 [https://kubernetes.io/docs/concepts/cluster-administration/networking/](https://kubernetes.io/docs/concepts/cluster-administration/networking/)
+
+## Service Mesh
+- External to application container
+- Deploys another container in the same pod as a Sidecar/Proxy
+- Pods will then start communicating to each other through the Proxy containers
+- The Sidecar containers now control how they communicate
+    - Example:
+      - Route 10% traffic to A, 90% to B 
 
 ### Cluster DNS
 - DNS is available as a Service in a Cluster
