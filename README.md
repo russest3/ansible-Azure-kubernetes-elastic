@@ -1855,14 +1855,19 @@ Kubernetes Metrics Server
 
 ## Kubernetes Security
 ### Securing the API Server
+
 - Authentication
 - Authorization
 - Admission Control
 
 ### Authentication
+
+- <b>DO NOT</b> attach IAM roles to nodes - Use <b>Service Accounts</b> instead
+    - IRSA (IAM Roles for Service Accounts)
+
 - Authenticated by the API Server
     - Can come from users via kubectl
-    - Or service accounts running in pods
+    - Or  running in pods
     - Also from Scheduler or Controller Manager
     - Or even individual nodes
         - Kubelet & Kube-proxy on worker nodes need to authenticate to the API server
@@ -1872,7 +1877,7 @@ Kubernetes Metrics Server
         - Common Name (CN) is the username
     - Authentication Tokens
         - Encodes authentication information in the HTTP Authorization Header in the client request
-        - Mostly used with service accounts
+        - Mostly used with 
         - Also Bootstrap Tokens and Static File
         - Only read on API Server startup
             - API restart necessary for any changes
@@ -1884,6 +1889,7 @@ Kubernetes Metrics Server
     - OpenID Connect (Single Sign-On)
 
 ### Users
+
 - Users are managed by external systems
 - There is no User API Object
 - Authentication plugin implements authentication
