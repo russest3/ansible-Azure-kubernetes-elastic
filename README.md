@@ -1336,6 +1336,15 @@ Webhooks
 
 - Http/https web server running within the cluster or external waiting for input (requires lots of coding)
 - Use <b>Centralized Policy Systems</b> instead
+    - No coding required
+    - Declared using yaml
+    - Policies and rules stored in a single place
+    - Installed via Helm
+    - Has it's own CLI
+- Examples of Centralized Policy Systems
+    - Open Policy Agent (other programming language)
+    - Kyverno (preferred)
+        - Purely YAML
 
 ### Cluster DNS
 - DNS is available as a Service in a Cluster
@@ -1884,6 +1893,30 @@ Kubernetes Metrics Server
         - For certificate authentication the Organization field represents the group
 
 ### Service Accounts
+
+- Allows you to use AWS constructs
+- <b>Attach IAM Role (with attached policy) to the Service Account</b>
+- Service Account can be associated with a Deployment
+- IAM OpenIDK Connect compatible IdP Provider (cluster level)
+    - This provider can interact with IAM
+- When no service account is specified <b>default</b> is used
+- Uses <b>Annotations</b> to link the AWS ARN to the service account
+- Associate the service account with a deployment
+
+<pre>
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-serviceaccount
+  namespace: default # Or your desired namespace
+  labels:
+    app: my-app
+  annotations:
+    # Optional: Add annotations if required for specific integrations
+    # For example, for AWS EKS Pod Identity:
+    # eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/MyEKSWorkloadRole
+</pre>
+ 
 - Authenticates Pods to the API Server
 - Apply permissions for authorization
 - Namespaced API Object
@@ -2108,6 +2141,8 @@ API Objects for Implementing RBAC Rules
 - Roles are namespaced
 
 ### Cluster Roles
+- Gives access to <b>Kubernetes</b> cluster resources accross all namespaces
+- Reusable
 - Independent of a namespace
 - Similar to role, enables access to Resources
 - Cluster scoped resources
