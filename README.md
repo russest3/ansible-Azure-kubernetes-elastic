@@ -1301,7 +1301,6 @@ Amazon VPC CNI Custom Networking for Pod
 - Included only when using the Amazon VPC CNI Plugin
 - Allows pods to access AWS resources
 
-
 ## Service Mesh
 - External to application container
 - Deploys another container in the same pod as a Sidecar/Proxy
